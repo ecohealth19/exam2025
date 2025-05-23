@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>computer science exam</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #555;
+        }
+
+        .btn {
+            display: block; /* devient block pour que les marges auto fonctionnent */
+            margin: 5px auto 0; /* centrage horizontal avec marge en haut */
+            padding: 10px 20px;
+            color: #fff;
+            background: #007BFF;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .question {
+            margin-bottom: 20px;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .options {
+            direction: ltr;
+            text-align: left;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: green; /* Adds green text color */
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            border-color: #007BFF;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        .form-container {
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .timer {
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #ff5722;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-bar div {
+            height: 100%;
+            width: 0;
+            background: #007BFF;
+            transition: width 0.5s ease;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+    </style>
+    <script>
+        let currentQuestion = 0;
+        let score = 0;
+        let answers = [];
+        let timer;
+        let totalQuestions = 0;
+        let totalTime;
+
+        window.onload = function () {
+            totalQuestions = document.querySelectorAll('.question').length;
+            totalTime = totalQuestions * 90;
+        };
+
+        function startExam() {
+            document.getElementById('start-page').classList.add('hidden');
+            document.getElementById('question-page').classList.remove('hidden');
+            showQuestion();
+            startTimer();
+        }
+
+        function validateForm() {
+            const inputs = document.querySelectorAll('#start-page input');
+            for (let input of inputs) {
+                if (!input.value.trim()) {
+                    alert('Please fill in all the fields');
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function showQuestion() {
+            const questions = document.querySelectorAll('.question');
+            questions.forEach((q, index) => {
+                q.classList.add('hidden');
+                if (index === currentQuestion) q.classList.remove('hidden');
+            });
+            updateProgressBar();
+        }
+
+        function startTimer() {
+            document.getElementById('timer').innerText = `Remaining time: ${formatTime(totalTime)}`;
+            timer = setInterval(() => {
+                totalTime--;
+                document.getElementById('timer').innerText = `Remaining time: ${formatTime(totalTime)}`;
+                if (totalTime <= 0) endExam();
+            }, 1000);
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes} mn & ${secs} secs`;
+        }
+
+        function updateProgressBar() {
+            const progress = (currentQuestion / totalQuestions) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        function nextQuestion() {
+            saveAnswer();
+            if (currentQuestion < totalQuestions - 1) {
+                currentQuestion++;
+                showQuestion();
+            } else {
+                endExam();
+            }
+        }
+
+        function previousQuestion() {
+            if (currentQuestion > 0) {
+                saveAnswer();
+                currentQuestion--;
+                showQuestion();
+            }
+        }
+
+        function saveAnswer() {
+            const selectedAnswer = document.querySelector(
+                `.question:not(.hidden) input[name="answer"]:checked`
+            );
+            if (selectedAnswer && !answers[currentQuestion]) {
+                answers[currentQuestion] = {
+                    value: selectedAnswer.value,
+                    correct: selectedAnswer.dataset.correct === 'true'
+                };
+                if (answers[currentQuestion].correct) {
+                    score++;
+                }
+            }
+        }
+
+        function endExam() {
+            clearInterval(timer);
+            saveAnswer(); // Save the answer for the last question
+            document.getElementById('question-page').classList.add('hidden');
+            document.getElementById('result-page').classList.remove('hidden');
+            document.getElementById('score').innerText = `your score is: ${score}/${totalQuestions}`;
+            saveAnswers();
+        }
+
+function saveAnswersToGoogleSheet() {
+    const formData = new FormData();
+    formData.append('name', document.getElementById('name').value);
+    formData.append('surname', document.getElementById('surname').value);
+    formData.append('regNumber', document.getElementById('regNumber').value);
+    formData.append('email', document.getElementById('email').value);
+    formData.append('score', score);
+    formData.append('answers', JSON.stringify(answers));
+
+    fetch('https://script.google.com/macros/s/AKfycbzZSA5h-4dy6TYlaXIVqPV5dabW3b_Y-MG-ADXvN2_xGB0sR_2RjILvRX6gbmBO-0TBog/exec', {
+        method: 'POST',
+        body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            // ✅ Redirect to thank you page with score
+            window.location.href = `thankyou.html?score=${score}/${totalQuestions}`;
+        } else {
+            alert('An error occurred while saving the answers: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Unable to connect to the server. Please try again later.');
+    });
+}
+    </script>
+</head>
+<header style="display: flex; justify-content: space-between; align-items: center; padding: 20px; background-color: #f0f0f0;">
+  <img src="logo_faculte.png" alt="faculty" style="height: 80px;">
+  
+  <h2 style="flex: 1; text-align: center; margin: 0; font-size: 24px;">
+    faculty of economics, commerces and managements sciences<br>
+    economics departement
+  </h2>
+  <img src="logo_departement.png" alt="departement" style="height: 80px;">
+
+</header>
+    <h2 style="flex: 1; text-align: center; margin: 0; font-size: 24px;">
+    health economics<br>
+    <br>
+    first year  </h2>
+  
+<body>
+    <div class="container" id="start-page">
+        <div class="header">
+            <h1>computer sciences exam</h1>
+        </div>
+        <div class="form-container">
+            <form onsubmit="return validateForm()">
+                <div class="form-title">Please enter your information to get started</div>
+                <div class="form-group">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" placeholder="your name" required>
+                </div>
+                <div class="form-group">
+                    <label for="surname">Surname:</label>
+                    <input type="text" id="surname" placeholder="your surname" required>
+                </div>
+                <div class="form-group">
+                    <label for="regNumber">Registration Number:</label>
+                    <input type="text" id="regNumber" placeholder="registration number" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" placeholder="enter your email" required>
+                    <a href="#" class="btn" onclick="if(validateForm()) startExam()">start the exam</a>
+                </div>
+            </form>
+        
+        </div>
+    </div>
+
+    <div class="container hidden" id="question-page">
+        <div class="timer" id="timer">remaining <time datetime=""></time>: 60 secs</div>
+        <div class="progress-bar"><div id="progress"></div></div>
+
+        <!-- Example Question -->
+        <div class="question">
+            <h3>Q1-What is the output of the following code snippet?</h3>
+            <center>print(2 + 3 * 4 - 16 / 2)</center></h3>
+            
+            <div class="options">
+                <input type="radio" name="answer" value="a">20<br>
+                <input type="radio" name="answer" value="b" data-correct="true">14<br>
+                <input type="radio" name="answer" value="c">24<br>
+                <input type="radio" name="answer" value="d">18<br>
+            </div>
+            <div class="navigation-buttons">
+                <button type="button" class="btn" onclick="previousQuestion()">Return</button>
+                <<button type="button" class="btn" onclick="nextQuestion()">Next ▶</button>
+            </div>
+        </div>
+
+        <div class="question">
+            <h3>Q2- Which of the following is a correct way to define a function in Python?</h3>
+            <div class="options">
+                <input type="radio" name="answer" value="a">function myFunc():<br>
+                <input type="radio" name="answer" value="b">def myFunc[]:.<br>
+                <input type="radio" name="answer" value="c"data-correct="true">def myFunc():<br>
+                <input type="radio" name="answer" value="d">define myFunc():<br>
+            </div>
+            <div class="navigation-buttons">
+                <button type="button" class="btn" onclick="previousQuestion()">◀ Previous</button>
+                <button type="button" class="btn" onclick="nextQuestion()">Next ▶</button>
+            </div>
+        </div>
+
+        <div class="question">
+            <h3>-Q3- What does the len() function do in Python?</h3>
+            <div class="options">
+                <input type="radio" name="answer" value="a"data-correct="true">Returns the number of items in an iterable<br>
+                <input type="radio" name="answer" value="b">Returns the size of the data type<br>
+                <input type="radio" name="answer" value="c">Returns the memory address of the object<br>
+                <input type="radio" name="answer" value="d">Returns the number of variables in a list<br>
+            </div>
+            <div class="navigation-buttons">
+                <button type="button" class="btn" onclick="previousQuestion()">◀ Previous</button>
+                <button type="button" class="btn" onclick="nextQuestion()">Next ▶</button>
+            </div>
+        </div>
+
+        <div class="question">
+            <h3>Q4- Which of the following data types is immutable in Python?</h3>
+            <div class="options">
+                <input type="radio" name="answer" value="a">List<br>
+                <input type="radio" name="answer" value="b">Dictionary<br>
+                <input type="radio" name="answer" value="c"data-correct="true">Tuple<br>
+                <input type="radio" name="answer" value="d">Set<br>
+            </div>
+            <div class="navigation-buttons">
+                <button type="button" class="btn" onclick="previousQuestion()">◀ Previous</button>
+                <button type="button" class="btn" onclick="nextQuestion()">Next ▶</button>
+            </div>
+        </div>
+
+        <div class="question">
+            <h3><h3>Q5- What is the output of the following code?</h3>
+            <center>print("Hello" * 2)</center></h3></h3>
+            <div class="options">
+                <input type="radio" name="answer" value="a"data-correct="true">HelloHello<br>
+                <input type="radio" name="answer" value="b">Hello2<br>
+                <input type="radio" name="answer" value="c">Hello Hello<br>
+                <input type="radio" name="answer" value="d">Error<br>
+            </div>
+            <div class="navigation-buttons">
+                <button type="button" class="btn" onclick="previousQuestion()">◀ Previous</button>
+                <button type="button" class="btn" onclick="nextQuestion()">Next ▶</button>
+            </div>
+        </div>
+        <div class="question">
+            <h3>Q6- Which of the following methods (function) is used to insert an element into a set in Python?</h3>
+            <div class="options">
+                <input type="radio" name="answer" value="a">append()<br>
+                <input type="radio" name="answer" value="b"data-correct="true"> add()<br>
+                <input type="radio" name="answer" value="c">insert()<br>
+                <input type="radio" name="answer" value="d">put()<br>
+            </div>
+            <div class="navigation-buttons">
+                <button type="button" class="btn" onclick="previousQuestion()">◀ Previous</button>
+                <button type="button" class="btn" onclick="nextQuestion()">Next ▶</button>
+            </div>
+        </div>
+
+        <div class="question">
+            <h3>Q7- Which of the following is NOT a valid Python data type?</h3>
+            <div class="options">
+                <input type="radio" name="answer" value="a">List<br>
+                <input type="radio" name="answer" value="b">Tuple<br>
+                <input type="radio" name="answer" value="c">Set<br>
+                <input type="radio" name="answer" value="d"data-correct="true">Array<br>
+            </div>
+            <div class="navigation-buttons">
+                <button type="button" class="btn" onclick="previousQuestion()">◀ Previous</button>
+                <button type="button" class="btn" onclick="nextQuestion()">Next ▶</button>
+            </div>
+        </div>
+
+        <div class="question">
+            <h3>Q8- Which of the following loops is used when the number of iterations is unknown?</h3>
+            <div class="options">
+                <input type="radio" name="answer" value="a">for<br>
+                <input type="radio" name="answer" value="b"data-correct="true">while<br>
+                <input type="radio" name="answer" value="c">loop<br>
+                <input type="radio" name="answer" value="d">repeat<br>
+            </div>
+            <div class="navigation-buttons">
+                <button type="button" class="btn" onclick="previousQuestion()">◀ Previous</button>
+                <button type="button" class="btn" onclick="nextQuestion()">Next ▶</button>
+            </div>
+        </div>
+
+        <div class="question">
+            <h3>Q9- Which of the following is the correct way to import only the sqrt function from the math module?</h3>
+            <div class="options">
+                <input type="radio" name="answer" value="a">import sqrt from math<br>
+                <input type="radio" name="answer" value="b">import math.sqrt<br>
+                <input type="radio" name="answer" value="c"data-correct="true">from math import sqrt<br>
+                <input type="radio" name="answer" value="d">from sqrt import math<br>
+            </div>
+            <div class="navigation-buttons">
+                <button type="button" class="btn" onclick="previousQuestion()">◀ Previous</button>
+                <button type="button" class="btn" onclick="nextQuestion()">Next ▶</button>
+            </div>
+        </div>
+
+        <div class="question">
+            <h3>Q10- What is the primary purpose of a venv in Python?</h3>
+            <div class="options">
+                <input type="radio" name="answer" value="a">To speed up Python execution<br>
+                <input type="radio" name="answer" value="b"data-correct="true">To isolate project dependencies<br>
+                <input type="radio" name="answer" value="c">To manage system-level packages<br>
+                <input type="radio" name="answer" value="d">To install the latest version of Python<br>
+            </div>
+            <div class="navigation-buttons">
+                <button type="button" class="btn" onclick="previousQuestion()">◀ Previous</button>
+                <button type="button" class="btn" onclick="nextQuestion()">Next ▶</button>
+            </div>
+        </div>
+            <div class="question">
+            <h3>Q11- If you run pip freeze > requirements.txt, what happens?</h3>
+            <div class="options">
+                <input type="radio" name="answer" value="a">The current virtual environment is deleted<br>
+                <input type="radio" name="answer" value="b">All installed packages are uninstalled<br>
+                <input type="radio" name="answer" value="c"data-correct="true">A list of installed packages and versions is saved<br>
+                <input type="radio" name="answer" value="d">Pip upgrades all packages automatically<br>
+            </div>
+            <div class="navigation-buttons">
+                <button type="button" class="btn" onclick="previousQuestion()">◀ Previous</button>
+                <button type="button" class="btn" onclick="nextQuestion()">Next ▶</button>
+            </div>
+        </div>
+            <div class="question">
+            <h3>Q12- Which command is used to create a new virtual environment in Python?</h3>
+            <div class="options">
+                <input type="radio" name="answer" value="a"data-correct="true">python -m venv myenv<br>
+                <input type="radio" name="answer" value="b">python create env<br>
+                <input type="radio" name="answer" value="c">virtualenv newenv<br>
+                <input type="radio" name="answer" value="d">pip install venv<br>
+            </div>
+            <div class="navigation-buttons">
+                <button type="button" class="btn" onclick="previousQuestion()">◀ Previous</button>
+                <button type="button" class="btn" onclick="nextQuestion()">finish the exam ▶</button>
+            </div>
+        </div>
+        <!-- Add remaining questions here -->
+        </div>
+
+    <div class="container hidden" id="result-page">
+        <div class="header">
+            <h1>النتيجة النهائية</h1>
+            <p id="score">نتيجتك: 0/15</p>
+            <button class="btn" onclick="saveAnswersToGoogleSheet()">حفظ الإجابات</button>
+        </div>
+    </div>
+</body>
+</html>
