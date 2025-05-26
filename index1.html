@@ -240,7 +240,7 @@ function saveAnswersToGoogleSheet() {
     formData.append('score', score);
     formData.append('answers', JSON.stringify(answers));
 
-    fetch('https://script.google.com/macros/s/AKfycbzZSA5h-4dy6TYlaXIVqPV5dabW3b_Y-MG-ADXvN2_xGB0sR_2RjILvRX6gbmBO-0TBog/exec', {
+    fetch('https://script.google.com/macros/s/AKfycbzZSA5h-4dy6TYlaXIVqPV5dabW3b_Y-MG-ADXvN2_xGB0sR_2RjILvRX6gbmBO-0TBog/', {
         method: 'POST',
         body: formData,
     })
